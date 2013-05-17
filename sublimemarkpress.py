@@ -25,7 +25,9 @@ class PublishCommand(sublime_plugin.TextCommand):
 		to be a markdown post
 
 		# markdown
-		If the file "markdown2.py" from the awesome repo https://github.com/trentm/python-markdown2/tree/master/lib exists, markdown is enabled
+		**Two options: **
+		1. If the file "markdown2.py" from the awesome repo https://github.com/trentm/python-markdown2/tree/master/lib exists, markdown is enabled
+		2. If the package "Python Markdown" installed in the plugin's path, markdown is enabled. Attention:build the plugin manually every time you restart the ST.
 	"""
 	def run(self, edit):
 		# get page content
@@ -97,15 +99,29 @@ class PublishCommand(sublime_plugin.TextCommand):
 		post_content = self.CombineContent(self.view, all_lines_in_page)
 
 		can_markdown = False
+		is_markdown2, is_python_markdown = False, False
 		try: 
-			import markdown2 # markdown
+			import markdown # python markdown
 			can_markdown = True
+			is_python_markdown = True
 		except ImportError:
 			can_markdown = False
+			self.view.insert(edit, 0, "str(ImportError)")
+
+		try: 
+			import markdown2 # markdown2
+			can_markdown = True
+			is_markdown2 = True
+		except ImportError:
+			can_markdown = False
+			self.view.insert(edit, 0, "str(ImportError)")
 
 		# markdown content
 		if is_markdown and can_markdown:
-			post_content = str(markdown2.markdown(post_content,extras=["code-friendly"]))
+			if is_python_markdown:
+				post_content = markdown.markdown(post_content, extensions=['codehilite'])
+			else:
+				post_content = str(markdown2.markdown(post_content, extras=["code-friendly"]))
 
 		return post_content
 
